@@ -1,0 +1,1107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Raises Calculator</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Crimson+Text:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg:        #1a1610;
+      --surface:   #231e17;
+      --surface2:  #2d2620;
+      --border:    #3d3428;
+      --gold:      #c8a96e;
+      --gold-dim:  #8a7148;
+      --gold-glow: rgba(200,169,110,0.15);
+      --red:       #c0392b;
+      --green:     #27ae60;
+      --text:      #e8d9bc;
+      --text-dim:  #8a7d68;
+      --raise-a:   #2e7d32;
+      --raise-b:   #1565c0;
+      --raise-c:   #6a1b9a;
+      --raise-d:   #c62828;
+      --raise-e:   #e65100;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Crimson Text', serif;
+      font-size: 16px;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* Parchment texture overlay */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .app {
+      position: relative;
+      z-index: 1;
+      padding: 16px;
+      max-width: 380px;
+      margin: 0 auto;
+    }
+
+    /* Header */
+    .header {
+      text-align: center;
+      margin-bottom: 16px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .header-title {
+      font-family: 'Cinzel', serif;
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--gold);
+      letter-spacing: 0.08em;
+      text-shadow: 0 0 20px var(--gold-glow);
+    }
+
+    .header-sub {
+      font-size: 12px;
+      color: var(--text-dim);
+      margin-top: 2px;
+      font-style: italic;
+    }
+
+    /* Section headings */
+    .section-label {
+      font-family: 'Cinzel', serif;
+      font-size: 10px;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--gold-dim);
+      margin-bottom: 8px;
+    }
+
+    /* Dice Input Section */
+    .dice-section {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 14px;
+      margin-bottom: 12px;
+    }
+
+    .dice-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+
+    .dice-count-display {
+      font-family: 'Cinzel', serif;
+      font-size: 28px;
+      font-weight: 700;
+      color: var(--gold);
+      min-width: 44px;
+      text-align: center;
+      text-shadow: 0 0 15px var(--gold-glow);
+    }
+
+    .dice-label {
+      font-size: 14px;
+      color: var(--text-dim);
+      flex: 1;
+    }
+
+    .btn-row {
+      display: flex;
+      gap: 6px;
+    }
+
+    .btn {
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-family: 'Cinzel', serif;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      transition: all 0.15s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .btn:active { transform: scale(0.96); }
+
+    .btn-counter {
+      width: 34px;
+      height: 34px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      color: var(--text);
+      font-size: 20px;
+    }
+
+    .btn-counter:hover {
+      border-color: var(--gold-dim);
+      color: var(--gold);
+    }
+
+    .dice-slider-wrap {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .dice-slider {
+      flex: 1;
+      -webkit-appearance: none;
+      appearance: none;
+      height: 4px;
+      background: var(--surface2);
+      border-radius: 2px;
+      outline: none;
+      border: 1px solid var(--border);
+    }
+
+    .dice-slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 16px;
+      height: 16px;
+      background: var(--gold);
+      border-radius: 50%;
+      cursor: pointer;
+      box-shadow: 0 0 8px var(--gold-glow);
+    }
+
+    .dice-slider::-moz-range-thumb {
+      width: 16px;
+      height: 16px;
+      background: var(--gold);
+      border-radius: 50%;
+      cursor: pointer;
+      border: none;
+      box-shadow: 0 0 8px var(--gold-glow);
+    }
+
+    .dice-input-num {
+      width: 52px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--text);
+      font-family: 'Cinzel', serif;
+      font-size: 14px;
+      text-align: center;
+      padding: 4px;
+      outline: none;
+    }
+
+    .dice-input-num:focus { border-color: var(--gold-dim); }
+
+    /* Options */
+    .options-section {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 14px;
+      margin-bottom: 12px;
+    }
+
+    .checkbox-label {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      cursor: pointer;
+      padding: 5px 0;
+      user-select: none;
+      transition: color 0.15s;
+    }
+
+    .checkbox-label:hover { color: var(--gold); }
+
+    .checkbox-label input {
+      display: none;
+    }
+
+    .custom-check {
+      width: 16px;
+      height: 16px;
+      min-width: 16px;
+      border: 1.5px solid var(--gold-dim);
+      border-radius: 3px;
+      background: var(--surface2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-top: 2px;
+      transition: all 0.15s;
+    }
+
+    .checkbox-label input:checked + .custom-check {
+      background: var(--gold-dim);
+      border-color: var(--gold);
+    }
+
+    .custom-check::after {
+      content: '';
+      width: 8px;
+      height: 5px;
+      border-left: 2px solid var(--bg);
+      border-bottom: 2px solid var(--bg);
+      transform: rotate(-45deg) translate(1px, -1px);
+      opacity: 0;
+      transition: opacity 0.1s;
+    }
+
+    .checkbox-label input:checked + .custom-check::after {
+      opacity: 1;
+    }
+
+    .check-text {
+      flex: 1;
+    }
+
+    .check-title {
+      font-family: 'Cinzel', serif;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--gold);
+      letter-spacing: 0.05em;
+    }
+
+    .check-desc {
+      font-size: 12px;
+      color: var(--text-dim);
+      font-style: italic;
+      line-height: 1.4;
+      margin-top: 1px;
+    }
+
+    /* Roll Button */
+    .roll-btn {
+      width: 100%;
+      padding: 12px;
+      background: linear-gradient(135deg, #3d2f1a 0%, #2a1f0f 50%, #3d2f1a 100%);
+      border: 1px solid var(--gold-dim);
+      border-radius: 8px;
+      color: var(--gold);
+      font-family: 'Cinzel', serif;
+      font-size: 15px;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      cursor: pointer;
+      transition: all 0.2s;
+      text-transform: uppercase;
+      margin-bottom: 12px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .roll-btn::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, transparent 40%, rgba(200,169,110,0.1) 100%);
+      opacity: 0;
+      transition: opacity 0.2s;
+    }
+
+    .roll-btn:hover {
+      border-color: var(--gold);
+      box-shadow: 0 0 20px var(--gold-glow), inset 0 0 20px rgba(200,169,110,0.05);
+    }
+
+    .roll-btn:hover::before { opacity: 1; }
+    .roll-btn:active { transform: scale(0.98); }
+
+    /* Results */
+    .results-section {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 14px;
+      display: none;
+    }
+
+    .results-section.visible { display: block; }
+
+    /* Dice pool display */
+    .dice-pool {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+      margin-bottom: 12px;
+      min-height: 32px;
+    }
+
+    .die-pip {
+      width: 30px;
+      height: 30px;
+      border-radius: 5px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Cinzel', serif;
+      font-size: 12px;
+      font-weight: 700;
+      border: 1.5px solid;
+      transition: all 0.3s;
+      position: relative;
+    }
+
+    .die-normal {
+      background: var(--surface2);
+      border-color: var(--border);
+      color: var(--text);
+    }
+
+    .die-exploded {
+      background: rgba(200,169,110,0.1);
+      border-color: var(--gold-dim);
+      color: var(--gold);
+    }
+
+    .die-exploded::after {
+      content: '★';
+      position: absolute;
+      top: -5px;
+      right: -5px;
+      font-size: 8px;
+      color: var(--gold);
+    }
+
+    .die-rerolled {
+      opacity: 0.35;
+      text-decoration: line-through;
+    }
+
+    /* Raise groups */
+    .raises-display {
+      margin-bottom: 12px;
+    }
+
+    .raise-group {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 6px;
+      padding: 6px 8px;
+      border-radius: 6px;
+      border: 1px solid;
+      font-size: 13px;
+      animation: fadeIn 0.3s ease;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateX(-4px); }
+      to   { opacity: 1; transform: translateX(0); }
+    }
+
+    .raise-badge {
+      font-family: 'Cinzel', serif;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      padding: 2px 6px;
+      border-radius: 3px;
+      min-width: 60px;
+      text-align: center;
+    }
+
+    .raise-dice-list {
+      flex: 1;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+    }
+
+    .raise-die {
+      font-family: 'Cinzel', serif;
+      font-size: 12px;
+      font-weight: 600;
+      padding: 1px 5px;
+      border-radius: 3px;
+      background: rgba(255,255,255,0.07);
+    }
+
+    .raise-total {
+      font-family: 'Cinzel', serif;
+      font-size: 12px;
+      color: var(--text-dim);
+    }
+
+    .raise-double-badge {
+      font-size: 10px;
+      padding: 1px 5px;
+      border-radius: 3px;
+      background: rgba(200,169,110,0.2);
+      color: var(--gold);
+      font-style: italic;
+    }
+
+    /* Color palette for raise groups */
+    .rg-0 { background: rgba(46,125,50,0.12);  border-color: #2e7d32; }
+    .rg-1 { background: rgba(21,101,192,0.12); border-color: #1565c0; }
+    .rg-2 { background: rgba(106,27,154,0.12); border-color: #6a1b9a; }
+    .rg-3 { background: rgba(198,40,40,0.12);  border-color: #c62828; }
+    .rg-4 { background: rgba(230,81,0,0.12);   border-color: #e65100; }
+    .rg-5 { background: rgba(0,105,92,0.12);   border-color: #00695c; }
+    .rg-6 { background: rgba(74,20,140,0.12);  border-color: #4a148c; }
+
+    .rb-0 { background: #2e7d32; color: #fff; }
+    .rb-1 { background: #1565c0; color: #fff; }
+    .rb-2 { background: #6a1b9a; color: #fff; }
+    .rb-3 { background: #c62828; color: #fff; }
+    .rb-4 { background: #e65100; color: #fff; }
+    .rb-5 { background: #00695c; color: #fff; }
+    .rb-6 { background: #4a148c; color: #fff; }
+
+    /* Leftover dice */
+    .leftover-section {
+      padding: 6px 8px;
+      border-radius: 6px;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid var(--border);
+      margin-bottom: 10px;
+      font-size: 13px;
+      color: var(--text-dim);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .leftover-label {
+      font-family: 'Cinzel', serif;
+      font-size: 10px;
+      letter-spacing: 0.08em;
+      color: var(--text-dim);
+      min-width: 60px;
+    }
+
+    .leftover-dice {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+    }
+
+    /* Summary */
+    .summary-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 12px;
+      background: linear-gradient(135deg, rgba(200,169,110,0.08), rgba(200,169,110,0.03));
+      border: 1px solid var(--gold-dim);
+      border-radius: 6px;
+    }
+
+    .summary-raises {
+      font-family: 'Cinzel', serif;
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--gold);
+      text-shadow: 0 0 12px var(--gold-glow);
+    }
+
+    .summary-label {
+      font-family: 'Cinzel', serif;
+      font-size: 10px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--gold-dim);
+      margin-top: 1px;
+    }
+
+    .summary-meta {
+      text-align: right;
+      font-size: 12px;
+      color: var(--text-dim);
+      font-style: italic;
+    }
+
+    .no-raise-msg {
+      text-align: center;
+      color: var(--text-dim);
+      font-style: italic;
+      font-size: 14px;
+      padding: 8px;
+    }
+
+    /* Manual dice input */
+    .manual-toggle {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 8px;
+      padding-top: 8px;
+      border-top: 1px solid var(--border);
+    }
+
+    .manual-toggle-label {
+      font-size: 12px;
+      color: var(--text-dim);
+      font-style: italic;
+      cursor: pointer;
+      flex: 1;
+    }
+
+    .manual-toggle-btn {
+      font-size: 11px;
+      padding: 3px 8px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      color: var(--text-dim);
+      cursor: pointer;
+      font-family: 'Cinzel', serif;
+      transition: all 0.15s;
+    }
+
+    .manual-toggle-btn:hover { border-color: var(--gold-dim); color: var(--gold); }
+
+    .manual-input-area {
+      display: none;
+      margin-top: 8px;
+    }
+
+    .manual-input-area.open { display: block; }
+
+    .manual-textarea {
+      width: 100%;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--text);
+      font-family: 'Crimson Text', serif;
+      font-size: 14px;
+      padding: 8px;
+      resize: vertical;
+      min-height: 56px;
+      outline: none;
+    }
+
+    .manual-textarea:focus { border-color: var(--gold-dim); }
+
+    .manual-hint {
+      font-size: 11px;
+      color: var(--text-dim);
+      font-style: italic;
+      margin-top: 4px;
+    }
+
+    .divider { height: 1px; background: var(--border); margin: 8px 0; }
+
+    /* Explosion indicator */
+    .explode-chain {
+      font-size: 11px;
+      color: var(--gold-dim);
+      font-style: italic;
+      margin-bottom: 6px;
+      display: none;
+    }
+    .explode-chain.visible { display: block; }
+  </style>
+</head>
+<body>
+<div class="app">
+  <div class="header">
+    <div class="header-title">⬡ Raises Calculator</div>
+    <div class="header-sub">Optimal grouping for d10 dice pools</div>
+  </div>
+
+  <!-- Dice Count -->
+  <div class="dice-section">
+    <div class="section-label">Dice Pool</div>
+    <div class="dice-row">
+      <div class="dice-count-display" id="diceCountDisplay">4</div>
+      <div class="dice-label">d10 dice</div>
+      <div class="btn-row">
+        <button class="btn btn-counter" id="btnMinus" onclick="changeDice(-1)">−</button>
+        <button class="btn btn-counter" id="btnPlus"  onclick="changeDice(+1)">+</button>
+      </div>
+    </div>
+    <div class="dice-slider-wrap">
+      <input type="range" class="dice-slider" id="diceSlider" min="1" max="20" value="4"
+             oninput="setDice(+this.value)">
+      <input type="number" class="dice-input-num" id="diceInputNum" min="1" max="99" value="4"
+             onchange="setDice(+this.value)">
+    </div>
+
+    <div class="manual-toggle">
+      <span class="manual-toggle-label">Already have results? Enter them manually.</span>
+      <button class="manual-toggle-btn" onclick="toggleManual()">Manual</button>
+    </div>
+    <div class="manual-input-area" id="manualInputArea">
+      <textarea class="manual-textarea" id="manualInput"
+        placeholder="e.g. 3 7 2 9 10 5"
+        oninput="parseManualInput()"></textarea>
+      <div class="manual-hint">Enter space or comma-separated die results (1–10). Exploded dice are rolled automatically when 10s Explode is enabled.</div>
+    </div>
+  </div>
+
+  <!-- Options -->
+  <div class="options-section">
+    <div class="section-label">Rules</div>
+
+    <label class="checkbox-label">
+      <input type="checkbox" id="optReroll" onchange="clearResults()">
+      <span class="custom-check"></span>
+      <span class="check-text">
+        <div class="check-title">Reroll Lowest Die</div>
+        <div class="check-desc">After the initial roll, the single lowest die is rerolled and the better result kept.</div>
+      </span>
+    </label>
+
+    <label class="checkbox-label">
+      <input type="checkbox" id="optFifteen" onchange="clearResults()">
+      <span class="custom-check"></span>
+      <span class="check-text">
+        <div class="check-title">Fifteen Rule</div>
+        <div class="check-desc">A grouping totalling 15 or more counts as 2 raises instead of 1.</div>
+      </span>
+    </label>
+
+    <label class="checkbox-label">
+      <input type="checkbox" id="optExplode" onchange="clearResults()">
+      <span class="custom-check"></span>
+      <span class="check-text">
+        <div class="check-title">10s Explode</div>
+        <div class="check-desc">Any result of 10 causes an additional die to be rolled. That die can also explode.</div>
+      </span>
+    </label>
+  </div>
+
+  <button class="roll-btn" onclick="rollAndCalculate()">⚄ Roll &amp; Calculate</button>
+
+  <!-- Results -->
+  <div class="results-section" id="resultsSection">
+    <div class="section-label">Rolled Dice</div>
+    <div class="dice-pool" id="dicePool"></div>
+
+    <div class="explode-chain" id="explodeChain"></div>
+
+    <div class="divider"></div>
+
+    <div class="section-label" style="margin-top:8px">Optimal Grouping</div>
+    <div class="raises-display" id="raisesDisplay"></div>
+    <div class="leftover-section" id="leftoverSection" style="display:none">
+      <span class="leftover-label">Unused</span>
+      <span class="leftover-dice" id="leftoverDice"></span>
+    </div>
+
+    <div class="summary-bar" id="summaryBar">
+      <div>
+        <div class="summary-raises" id="summaryRaises">0</div>
+        <div class="summary-label">Raises</div>
+      </div>
+      <div class="summary-meta" id="summaryMeta"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ─── State ───────────────────────────────────────────────────────────────────
+let diceCount = 4;
+let manualMode = false;
+let lastRoll = null;
+
+// ─── Dice Count Controls ──────────────────────────────────────────────────────
+function setDice(n) {
+  diceCount = Math.max(1, Math.min(99, isNaN(n) ? 1 : n));
+  document.getElementById('diceCountDisplay').textContent = diceCount;
+  document.getElementById('diceSlider').value = Math.min(diceCount, 20);
+  document.getElementById('diceInputNum').value = diceCount;
+  clearResults();
+}
+
+function changeDice(delta) {
+  setDice(diceCount + delta);
+}
+
+function toggleManual() {
+  const area = document.getElementById('manualInputArea');
+  manualMode = !area.classList.contains('open');
+  area.classList.toggle('open', manualMode);
+  clearResults();
+}
+
+function parseManualInput() {
+  clearResults();
+}
+
+// ─── Rolling ──────────────────────────────────────────────────────────────────
+function rollD10() {
+  return Math.floor(Math.random() * 10) + 1;
+}
+
+function rollPool(count, explode) {
+  // Returns { dice: [{value, exploded, baseIdx}], explosionLog }
+  const dice = [];
+  const explosionLog = [];
+
+  for (let i = 0; i < count; i++) {
+    const v = rollD10();
+    dice.push({ value: v, exploded: false, groupIdx: null });
+    if (explode && v === 10) {
+      let extraVal;
+      let depth = 0;
+      let chain = [v];
+      do {
+        extraVal = rollD10();
+        chain.push(extraVal);
+        dice.push({ value: extraVal, exploded: true, groupIdx: null });
+        depth++;
+      } while (extraVal === 10 && depth < 20);
+      if (chain.length > 1) {
+        explosionLog.push(`Die ${i + 1} exploded: ${chain.join(' → ')}`);
+      }
+    }
+  }
+  return { dice, explosionLog };
+}
+
+// ─── Main Entry ──────────────────────────────────────────────────────────────
+function rollAndCalculate() {
+  const optReroll  = document.getElementById('optReroll').checked;
+  const optFifteen = document.getElementById('optFifteen').checked;
+  const optExplode = document.getElementById('optExplode').checked;
+
+  let dice, explosionLog = [];
+
+  if (manualMode) {
+    const raw = document.getElementById('manualInput').value;
+    const parsed = raw.split(/[\s,]+/).map(Number).filter(n => n >= 1 && n <= 10);
+    if (!parsed.length) { alert('Enter at least one die result (1–10).'); return; }
+    dice = parsed.map(v => ({ value: v, exploded: false }));
+
+    // If explode option on, automatically add explosions for 10s in manual input
+    if (optExplode) {
+      const extra = [];
+      dice.forEach((d, i) => {
+        if (d.value === 10) {
+          let extraVal;
+          let depth = 0;
+          let chain = [d.value];
+          do {
+            extraVal = rollD10();
+            chain.push(extraVal);
+            extra.push({ value: extraVal, exploded: true });
+            depth++;
+          } while (extraVal === 10 && depth < 20);
+          explosionLog.push(`Die ${i + 1} (manual 10) exploded: ${chain.join(' → ')}`);
+        }
+      });
+      dice = dice.concat(extra);
+    }
+  } else {
+    const result = rollPool(diceCount, optExplode);
+    dice = result.dice;
+    explosionLog = result.explosionLog;
+  }
+
+  // Reroll lowest (non-exploded base dice only)
+  let rerolledIdx = -1;
+  let rerolledOld = null;
+  if (optReroll) {
+    const baseDice = dice.filter(d => !d.exploded);
+    if (baseDice.length > 1) {
+      const minVal = Math.min(...baseDice.map(d => d.value));
+      const minIdx = dice.findIndex(d => !d.exploded && d.value === minVal);
+      rerolledOld = dice[minIdx].value;
+      const newVal = rollD10();
+      const kept = Math.max(rerolledOld, newVal);
+      dice[minIdx].value = kept;
+      dice[minIdx].rerolledFrom = rerolledOld;
+      dice[minIdx].rerolledTo = newVal;
+      rerolledIdx = minIdx;
+
+      // If the new roll is 10 and explode is on, add explosion
+      if (optExplode && newVal === 10) {
+        let extraVal;
+        let depth = 0;
+        let chain = [10];
+        do {
+          extraVal = rollD10();
+          chain.push(extraVal);
+          dice.push({ value: extraVal, exploded: true });
+          depth++;
+        } while (extraVal === 10 && depth < 20);
+        explosionLog.push(`Rerolled die exploded: ${chain.join(' → ')}`);
+      }
+    }
+  }
+
+  // Solve for optimal raises
+  const solution = solveRaises(dice.map(d => d.value), optFifteen);
+  lastRoll = { dice, explosionLog, solution, rerolledIdx, rerolledOld, optFifteen };
+  renderResults(lastRoll);
+}
+
+// ─── Solver ───────────────────────────────────────────────────────────────────
+/*
+  Strategy: greedily partition dice into groups worth >= 10.
+  We want to MAXIMISE raises (and if fifteen rule, double-raises).
+  
+  Approach: branch-and-bound / dynamic programming over subsets.
+  For pools up to ~20 dice this is tractable. For larger pools we use
+  a fast greedy with local search.
+*/
+function solveRaises(values, fifteenRule) {
+  const n = values.length;
+  const sorted = [...values].sort((a, b) => b - a); // desc
+
+  if (n <= 16) {
+    return solveDP(sorted, fifteenRule);
+  } else {
+    return solveGreedy(sorted, fifteenRule);
+  }
+}
+
+function raiseValue(sum, fifteenRule) {
+  if (sum < 10) return 0;
+  if (fifteenRule && sum >= 15) return 2;
+  return 1;
+}
+
+function solveDP(sorted, fifteenRule) {
+  const n = sorted.length;
+  const total = 1 << n;
+  // dp[mask] = { raises, groups[] }
+  // Too expensive for n>20; limit enforced above
+  const dp = new Array(total);
+  dp[0] = { raises: 0, groups: [] };
+
+  // Enumerate all subsets that form a valid group (sum >= 10)
+  const subsetSum = new Array(total).fill(0);
+  for (let mask = 1; mask < total; mask++) {
+    const lsb = mask & -mask;
+    const idx = Math.log2(lsb);
+    subsetSum[mask] = subsetSum[mask ^ lsb] + sorted[idx];
+  }
+
+  for (let mask = 1; mask < total; mask++) {
+    let best = { raises: -1, groups: [] };
+    // Try all non-empty subsets of mask as a single group
+    let sub = mask;
+    while (sub > 0) {
+      const s = subsetSum[sub];
+      const rv = raiseValue(s, fifteenRule);
+      if (rv > 0) {
+        const rest = mask ^ sub;
+        if (dp[rest] !== undefined && dp[rest].raises + rv > best.raises) {
+          best = {
+            raises: dp[rest].raises + rv,
+            groups: [...dp[rest].groups, { mask: sub, sum: s, raises: rv }]
+          };
+        }
+      }
+      sub = (sub - 1) & mask;
+    }
+    if (best.raises >= 0) {
+      dp[mask] = best;
+    } else {
+      // No raise possible with any subset — store 0 if not set
+      const prev = dp[mask ^ (mask & -mask)];
+      dp[mask] = prev ? { raises: prev.raises, groups: prev.groups } : { raises: 0, groups: [] };
+    }
+  }
+
+  const full = total - 1;
+  const result = dp[full] || { raises: 0, groups: [] };
+
+  // Convert masks to actual dice indices
+  const groups = result.groups.map(g => {
+    const indices = [];
+    for (let i = 0; i < n; i++) {
+      if (g.mask & (1 << i)) indices.push(i);
+    }
+    return { dice: indices.map(i => sorted[i]), sum: g.sum, raises: g.raises };
+  });
+
+  // Find which indices are in groups
+  const usedMask = result.groups.reduce((acc, g) => acc | g.mask, 0);
+  const leftover = [];
+  for (let i = 0; i < n; i++) {
+    if (!(usedMask & (1 << i))) leftover.push(sorted[i]);
+  }
+
+  return { raises: result.raises, groups, leftover };
+}
+
+function solveGreedy(sorted, fifteenRule) {
+  // For large pools: greedy — repeatedly find best single group
+  const remaining = [...sorted];
+  const groups = [];
+  let totalRaises = 0;
+
+  // Try to form groups greedily: pick combinations that yield raises
+  // Sort desc; greedily pick smallest valid subsets (prefer single-die 10s, then pairs)
+  while (remaining.length > 0) {
+    let best = null;
+    // Try all subsets of size 1..min(6, remaining.length)
+    const maxSubsetSize = Math.min(6, remaining.length);
+    const n = remaining.length;
+    for (let size = 1; size <= maxSubsetSize; size++) {
+      // generate combos of `size` from remaining
+      const combos = getCombinations(remaining.length, size);
+      for (const indices of combos) {
+        const sum = indices.reduce((a, i) => a + remaining[i], 0);
+        const rv = raiseValue(sum, fifteenRule);
+        if (rv > 0) {
+          if (!best || rv > best.rv || (rv === best.rv && indices.length < best.indices.length)) {
+            best = { indices, sum, rv };
+          }
+        }
+      }
+      if (best && best.rv === (fifteenRule ? 2 : 1)) break; // Can't do better
+    }
+    if (!best) break;
+    const dice = best.indices.map(i => remaining[i]);
+    groups.push({ dice, sum: best.sum, raises: best.rv });
+    totalRaises += best.rv;
+    // Remove used dice (desc index to not shift)
+    for (let i = best.indices.length - 1; i >= 0; i--) {
+      remaining.splice(best.indices[i], 1);
+    }
+  }
+
+  return { raises: totalRaises, groups, leftover: remaining };
+}
+
+function getCombinations(n, r) {
+  const result = [];
+  const combo = [];
+  function helper(start) {
+    if (combo.length === r) { result.push([...combo]); return; }
+    for (let i = start; i < n; i++) {
+      combo.push(i);
+      helper(i + 1);
+      combo.pop();
+    }
+  }
+  helper(0);
+  return result;
+}
+
+// ─── Rendering ────────────────────────────────────────────────────────────────
+function clearResults() {
+  document.getElementById('resultsSection').classList.remove('visible');
+}
+
+function renderResults({ dice, explosionLog, solution, rerolledIdx, rerolledOld, optFifteen }) {
+  const section = document.getElementById('resultsSection');
+  section.classList.add('visible');
+
+  // Dice pool
+  const pool = document.getElementById('dicePool');
+  pool.innerHTML = '';
+  dice.forEach((d, i) => {
+    const pip = document.createElement('div');
+    pip.className = 'die-pip ' + (d.exploded ? 'die-exploded' : 'die-normal');
+    if (d.rerolledFrom !== undefined) {
+      pip.title = `Rerolled from ${d.rerolledFrom} → ${d.rerolledTo}, kept ${d.value}`;
+      pip.style.borderColor = '#c8a96e';
+    }
+    pip.textContent = d.value;
+    pool.appendChild(pip);
+  });
+
+  // Explosion log
+  const explodeEl = document.getElementById('explodeChain');
+  if (explosionLog.length > 0) {
+    explodeEl.textContent = '★ ' + explosionLog.join(' | ');
+    explodeEl.classList.add('visible');
+  } else {
+    explodeEl.classList.remove('visible');
+  }
+
+  // Raise groups
+  const raisesEl = document.getElementById('raisesDisplay');
+  raisesEl.innerHTML = '';
+
+  const COLORS = ['rg-0','rg-1','rg-2','rg-3','rg-4','rg-5','rg-6'];
+  const BADGE_COLORS = ['rb-0','rb-1','rb-2','rb-3','rb-4','rb-5','rb-6'];
+
+  if (solution.groups.length === 0) {
+    raisesEl.innerHTML = '<div class="no-raise-msg">No raises achieved with these dice.</div>';
+  } else {
+    solution.groups.forEach((g, gi) => {
+      const ci = gi % COLORS.length;
+      const row = document.createElement('div');
+      row.className = `raise-group ${COLORS[ci]}`;
+      row.style.animationDelay = `${gi * 60}ms`;
+
+      const badge = document.createElement('span');
+      badge.className = `raise-badge ${BADGE_COLORS[ci]}`;
+      badge.textContent = g.raises === 2 ? 'Double Raise' : 'Raise';
+
+      const diceList = document.createElement('span');
+      diceList.className = 'raise-dice-list';
+      g.dice.forEach(v => {
+        const d = document.createElement('span');
+        d.className = 'raise-die';
+        d.textContent = v;
+        diceList.appendChild(d);
+      });
+
+      const total = document.createElement('span');
+      total.className = 'raise-total';
+      total.textContent = `= ${g.sum}`;
+
+      row.appendChild(badge);
+      row.appendChild(diceList);
+      row.appendChild(total);
+
+      if (g.raises === 2) {
+        const db = document.createElement('span');
+        db.className = 'raise-double-badge';
+        db.textContent = '15+ rule';
+        row.appendChild(db);
+      }
+
+      raisesEl.appendChild(row);
+    });
+  }
+
+  // Leftover dice
+  const leftoverSection = document.getElementById('leftoverSection');
+  const leftoverDice = document.getElementById('leftoverDice');
+  if (solution.leftover && solution.leftover.length > 0) {
+    leftoverDice.innerHTML = solution.leftover.map(v =>
+      `<span class="raise-die" style="opacity:0.5">${v}</span>`
+    ).join('');
+    leftoverSection.style.display = 'flex';
+  } else {
+    leftoverSection.style.display = 'none';
+  }
+
+  // Summary
+  document.getElementById('summaryRaises').textContent = solution.raises;
+  const totalDiceRolled = dice.length;
+  const baseDiceCount = dice.filter(d => !d.exploded).length;
+  let metaLines = [];
+  metaLines.push(`${totalDiceRolled} dice rolled`);
+  if (totalDiceRolled !== baseDiceCount) {
+    metaLines.push(`(${totalDiceRolled - baseDiceCount} exploded)`);
+  }
+  if (solution.groups.length > 0) {
+    const diceUsed = solution.groups.reduce((a, g) => a + g.dice.length, 0);
+    metaLines.push(`${diceUsed} dice in ${solution.groups.length} group${solution.groups.length !== 1 ? 's' : ''}`);
+  }
+  document.getElementById('summaryMeta').innerHTML = metaLines.join('<br>');
+}
+
+// ─── Init ─────────────────────────────────────────────────────────────────────
+setDice(4);
+</script>
+</body>
+</html>

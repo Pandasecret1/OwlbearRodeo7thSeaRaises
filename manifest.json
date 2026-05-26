@@ -1,0 +1,12 @@
+{
+  "name": "Raises Calculator",
+  "version": "1.0.0",
+  "manifest_version": 1,
+  "action": {
+    "title": "Raises Calculator",
+    "icon": "/icon.svg",
+    "popover": "/",
+    "height": 580,
+    "width": 380
+  }
+}
